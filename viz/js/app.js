@@ -53,10 +53,30 @@ function drawMap() {
             sublayer.set({"interactivity": ["municipality", "section_all", "total", "section_all_pct"]});
             sublayer.on("featureClick" ,function(event, latlng, pos, data, layerindex)  {
                 showMunicipalityInfo(data);
+                highlightPolygon(data);
             });
+            addCursorInteraction(layers[1]);
         });
 };
 
+function addCursorInteraction(layer) {
+    var hovers = [];
+    layer.bind('featureOver', function(e, latlon, pxPos, data, layer) {
+        hovers[layer] = 1;
+        if(_.any(hovers)) {
+            $('#map').css('cursor', 'pointer');
+            console.log("hovered");
+        }
+    });
+    layer.bind('featureOut', function(m, layer) {
+        hovers[layer] = 0;
+        if(!_.any(hovers)) {
+            $('#map').css('cursor', 'auto');
+        }
+    });
+}
+
+// show the detailed info of a municipality in the sidebar
 function showMunicipalityInfo(data) {
     var sectionField = "section_" + selectedSection + "_pct";
     var sql = "SELECT district, section_1_pct, section_2_pct, section_3_pct, section_4_pct, section_5_pct, section_6_pct, section_all_pct FROM rolling_blackout WHERE municipality='" + data.municipality + "';";
@@ -102,6 +122,17 @@ function showMunicipalityInfo(data) {
         });
         $("#district-data tbody").append(tablerows);
         highlightSectionInTable();
+    });
+}
+
+function highlightPolygon(data) {
+    var sql = new cartodb.SQL({ user: "datafable", format: "geojson" });
+    var sqlstring = "SELECT ST_Simplify(the_geom, 0.1) as the_geom FROM municipalities_belgium WHERE name='" + data.municipality + "'";
+    sql.execute(sqlstring).done(function(geojson) {
+        console.log(geojson);
+        var geo = L.GeoJSON.geometryToLayer(geojson.features[0].geometry);
+        geo.setStyle({fillColor: '#FFFFFF', fillOpacity: 1});
+        geo.addTo(layers[0]);
     });
 }
 
