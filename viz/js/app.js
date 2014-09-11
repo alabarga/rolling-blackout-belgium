@@ -53,28 +53,17 @@ function drawMap() {
             sublayer.set({"interactivity": ["municipality", "section_all", "total", "section_all_pct"]});
             sublayer.on("featureClick" ,function(event, latlng, pos, data, layerindex)  {
                 showMunicipalityInfo(data);
-                highlightPolygon(data);
             });
-            addCursorInteraction(layers[1]);
+            sublayer.on("featureOver", function(event, latlng, pos, data, layerindex) {
+                $("#map").css("cursor", "pointer");
+                console.log("pointer");
+            });
+            sublayer.on("featureOut", function(event, latlng, pos, data, layerindex) {
+                $("#map").css("cursor", "auto");
+                console.log("auto");
+            });
         });
 };
-
-function addCursorInteraction(layer) {
-    var hovers = [];
-    layer.bind('featureOver', function(e, latlon, pxPos, data, layer) {
-        hovers[layer] = 1;
-        if(_.any(hovers)) {
-            $('#map').css('cursor', 'pointer');
-            console.log("hovered");
-        }
-    });
-    layer.bind('featureOut', function(m, layer) {
-        hovers[layer] = 0;
-        if(!_.any(hovers)) {
-            $('#map').css('cursor', 'auto');
-        }
-    });
-}
 
 // show the detailed info of a municipality in the sidebar
 function showMunicipalityInfo(data) {
